@@ -5,7 +5,11 @@
   "compilerOptions": {
     "types": [
       "node",
-      "typed-query-selector/strict"
+      "typed-query-selector/strict",
+      "vite-plugin-terminal/client"
     ]
-  }
+  },
+  "files": [
+    "env.d.ts"
+  ]
 }

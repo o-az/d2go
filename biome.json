@@ -51,6 +51,9 @@
         "noStaticOnlyClass": "off",
         "noUselessConstructor": "off"
       },
+      "nursery": {
+        "noFloatingPromises": "error"
+      },
       "performance": {
         "noDelete": "off"
       },
@@ -69,7 +72,8 @@
         "noUnknownAtRules": "off",
         "noEmptyInterface": "off",
         "noConfusingVoidType": "off",
-        "noAssignInExpressions": "off"
+        "noAssignInExpressions": "off",
+        "useIterableCallbackReturn": "off"
       }
     }
   },

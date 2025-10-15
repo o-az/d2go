@@ -1,10 +1,21 @@
 import { defineConfig } from 'wxt'
 
+// const vitePlugins: Array<PluginOption> = []
+
+// if (process.env.NODE_ENV === 'development') {
+//   vitePlugins.push(
+//     Terminal({
+//       output: ['console', 'terminal'],
+//     }),
+//   )
+// }
+
 export default defineConfig({
   imports: false,
+  modules: ['@wxt-dev/auto-icons'],
   manifest: {
     name: 'DevTool2Go',
-    permissions: ['activeTab', 'storage'],
+    permissions: ['activeTab', 'tabs', 'storage'],
     author: { email: 'devtool2go@async.email' },
     description: 'Mobile-friendly developer console powered by Eruda',
     browser_specific_settings: {
