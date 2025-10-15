@@ -1,0 +1,32 @@
+{
+  "name": "devtool2go",
+  "description": "simply a developer console in your mobile and PC, Safari and Firefox",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt --browser firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build --browser firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip --browser firefox",
+    "check": "biome check --write . --unsafe",
+    "compile": "tsc --noEmit --project tsconfig.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "eruda": "^3.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.6",
+    "typescript": "^5.9.3",
+    "wxt": "^0.20.11"
+  },
+  "overrides": {
+    "wxt": "0.20.11",
+    "@wxt-dev/browser": "0.1.4",
+    "@wxt-dev/storage": "1.2.5"
+  }
+}
