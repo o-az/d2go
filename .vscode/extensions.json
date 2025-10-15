@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "redhat.java",
+    "biomejs.biome",
+    "ms-vscode.js-debug",
+    "redhat.vscode-yaml",
+    "expo.vscode-expo-tools"
+  ],
+  "unwantedRecommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint"
+  ]
+}

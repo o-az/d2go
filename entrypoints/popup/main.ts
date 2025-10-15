@@ -1,24 +1,10 @@
-import './style.css';
-import typescriptLogo from '@/assets/typescript.svg';
-import wxtLogo from '/wxt.svg';
-import { setupCounter } from '@/components/counter';
+const app = document.querySelector('div#app')
+if (!app) throw new Error('App root element not found')
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://wxt.dev" target="_blank">
-      <img src="${wxtLogo}" class="logo" alt="WXT logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>WXT + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the WXT and TypeScript logos to learn more
-    </p>
+app.innerHTML = /* html */ `
+  <div style="padding: 20px; font-family: system-ui; min-width: 300px;">
+    <h2>DevTool2Go</h2>
+    <p>✨ Eruda DevTools is active on all pages</p>
+    <p>Look for the floating Eruda icon on any webpage</p>
   </div>
-`;
-
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!);
+`
