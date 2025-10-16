@@ -4,7 +4,7 @@ export default defineBackground({
   type: 'module',
   main() {
     console.log(
-      'Hello background!',
+      'background:loaded',
       JSON.stringify({ id: browser.runtime.id }, undefined, 2),
     )
   },

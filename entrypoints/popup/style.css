@@ -4,12 +4,9 @@ body {
   box-sizing: border-box;
 }
 
+p,
 label,
 input,
 button {
-  font-size: 1.1em;
-}
-
-header {
-  font-size: 1.2em;
+  font-size: 1.3em;
 }

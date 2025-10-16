@@ -1,26 +1,25 @@
-import { defineConfig } from 'wxt'
+import { defineConfig, type WebExtConfig } from 'wxt'
 
-// const vitePlugins: Array<PluginOption> = []
+const binaries: WebExtConfig['binaries'] = {}
 
-// if (process.env.NODE_ENV === 'development') {
-//   vitePlugins.push(
-//     Terminal({
-//       output: ['console', 'terminal'],
-//     }),
-//   )
-// }
+const edgePath = process.env.EDGE_BINARY_PATH
+const chromePath = process.env.CHROME_BINARY_PATH
+const firefoxPath = process.env.FIREFOX_BINARY_PATH
+
+if (edgePath) binaries.edge = edgePath
+if (chromePath) binaries.chrome = chromePath
+if (firefoxPath) binaries.firefox = firefoxPath
 
 export default defineConfig({
   imports: false,
+  webExt: { binaries },
   modules: ['@wxt-dev/auto-icons'],
   manifest: {
-    name: 'DevTool2Go',
+    name: 'D2Go',
     permissions: ['activeTab', 'tabs', 'storage'],
-    author: { email: 'devtool2go@async.email' },
-    description: 'Mobile-friendly developer console powered by Eruda',
     browser_specific_settings: {
       gecko: {
-        id: 'devtool2go@o-az.dev',
+        id: 'omaraziz.dev@gmail.com',
         strict_min_version: '109.0',
       },
     },
@@ -30,5 +29,7 @@ export default defineConfig({
         resources: ['../node_modules/eruda/eruda.js'],
       },
     ],
+    author: { email: 'd2go@async.email' },
+    description: 'Mobile-friendly developer console',
   },
 })

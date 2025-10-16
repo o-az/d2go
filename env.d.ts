@@ -1,6 +1,10 @@
 interface EnvironmentVariables {
   readonly PORT: string
   readonly NODE_ENV: 'development' | 'production'
+
+  readonly EDGE_BINARY_PATH: string
+  readonly CHROME_BINARY_PATH: string
+  readonly FIREFOX_BINARY_PATH: string
 }
 
 declare namespace NodeJS {

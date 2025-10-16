@@ -4,17 +4,12 @@ const ERUDA_ROOT_ID = 'devtool2go-eruda-root'
 const PREF_AUTO_LOAD = 'preference:auto-load'
 const PREF_AUTO_HIDE = 'preference:auto-hide'
 
-declare global {
-  interface Window {
-    __DEVTOOL2GO_ERUDA_LOADED?: boolean
-  }
-}
-
 let erudaLoader: Promise<typeof import('eruda')['default']> | null = null
 let initializingEruda: Promise<void> | null = null
 let desiredAutoHide = true
 let autoHideTeardown: (() => void) | null = null
 let extensionApi: ReturnType<typeof ensureBrowserApi> | undefined
+let erudaReady = false
 
 export default defineContentScript({
   world: 'ISOLATED',
@@ -130,7 +125,7 @@ function ensureContainer(): HTMLElement {
 }
 
 async function initErudaOnce() {
-  if (window.__DEVTOOL2GO_ERUDA_LOADED) return
+  if (erudaReady) return
 
   if (!initializingEruda) {
     initializingEruda = (async () => {
@@ -142,10 +137,10 @@ async function initErudaOnce() {
         eruda.init({
           container,
         })
-        window.__DEVTOOL2GO_ERUDA_LOADED = true
+        erudaReady = true
         await setAutoHide(desiredAutoHide, eruda)
       } catch (error) {
-        window.__DEVTOOL2GO_ERUDA_LOADED = false
+        erudaReady = false
         throw error
       }
     })()
@@ -197,7 +192,7 @@ async function setAutoHide(
     autoHideTeardown = null
   }
 
-  if (!window.__DEVTOOL2GO_ERUDA_LOADED) return
+  if (!erudaReady) return
 
   if (!enabled) return
 
