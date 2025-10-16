@@ -14,6 +14,11 @@ export default defineConfig({
   imports: false,
   webExt: { binaries },
   modules: ['@wxt-dev/auto-icons'],
+  autoIcons: {
+    enabled: true,
+    developmentIndicator: 'grayscale',
+    baseIconPath: './assets/icon.png',
+  },
   manifest: {
     name: 'D2Go',
     permissions: ['activeTab', 'tabs', 'storage'],

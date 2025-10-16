@@ -3,10 +3,11 @@
     "./.wxt/tsconfig.json"
   ],
   "compilerOptions": {
+    "strict": true,
+    "strictNullChecks": true,
     "types": [
       "node",
-      "typed-query-selector/strict",
-      "vite-plugin-terminal/client"
+      "typed-query-selector/strict"
     ]
   },
   "files": [
