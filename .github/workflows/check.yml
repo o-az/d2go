@@ -101,7 +101,9 @@ jobs:
       - name: "💬 Comment on PR"
         if: github.event_name == 'pull_request'
         env:
-          GH_TOKEN: ${{ github.token }}
+          # To have comments appear from your account instead of github-actions[bot],
+          # create a PAT and add it as GH_PAT secret. See .github/PR_COMMENTS_SETUP.md
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           # Get the run URL for artifact downloads
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
