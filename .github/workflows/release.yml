@@ -6,42 +6,50 @@ on:
       - 'v*'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
 permissions:
   contents: write
 
 jobs:
   build-and-release:
+    name: "Build & Release"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: "🔑 Checkout"
+        uses: actions/checkout@v5
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: "🐰 Setup bun"
+        uses: oven-sh/setup-bun@main
         with:
-          bun-version: latest
+          bun-version: "latest"
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - name: "📦 Install Dependencies"
+        run: bun install --frozen-lockfile --verbose
 
-      - name: Lint and typecheck
+      - name: "🔍 Lint, Check, Build"
         run: |
-          bun run check
-          bun run typecheck
-
-      - name: Build and zip Chrome extension
-        run: |
+          bun x @biomejs/biome check . --reporter='github'
+          bun typecheck
           bun run build
-          bun run zip
 
-      - name: Build and zip Firefox extension
+      - name: "📦 Build and zip Chrome extension"
+        run: bun run zip
+
+      - name: "🦊 Build and zip Firefox extension"
         run: |
           bun run build:firefox
           bun run zip:firefox
 
-      - name: Prepare release artifacts
+      - name: "🗂️ Prepare release artifacts"
         run: |
           mkdir -p release-artifacts
 
@@ -67,65 +75,60 @@ jobs:
 
           ls -la release-artifacts/
 
-      - name: Extract version from tag
+      - name: "📝 Extract version from tag"
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: D2Go v${{ steps.version.outputs.VERSION }}
-          body: |
-            # D2Go v${{ steps.version.outputs.VERSION }}
-
-            Developer Tools To Go - A mobile-friendly developer console browser extension.
-
-            ## Download & Installation
-
-            ### Chrome / Chromium / Edge
-
-            1. **Download** the `d2go-chrome.zip` file from the assets below
-            2. **Extract** the zip file to a folder on your computer
-            3. **Open** Chrome and navigate to `chrome://extensions/`
-            4. **Enable** "Developer mode" using the toggle in the top-right corner
-            5. **Click** "Load unpacked" button
-            6. **Select** the extracted folder
-            7. The D2Go extension should now appear in your extensions list!
-
-            ### Firefox
-
-            **Note:** Firefox requires extensions to be signed for permanent installation. For development/testing:
-
-            1. **Download** the `d2go-firefox.zip` file from the assets below
-            2. **Open** Firefox and navigate to `about:debugging#/runtime/this-firefox`
-            3. **Click** "Load Temporary Add-on..."
-            4. **Navigate** to the downloaded zip file and select it
-            5. The extension will be loaded temporarily (until you restart Firefox)
-
-            **For permanent installation:** You can load the extension permanently by:
-            - Setting `xpinstall.signatures.required` to `false` in `about:config` (Firefox Developer Edition or Nightly only)
-            - Or wait for the extension to be published on Firefox Add-ons (coming soon!)
-
-            ## Usage
-
-            After installation:
-            1. Click the D2Go icon in your browser toolbar
-            2. Configure your preferences (auto-load, auto-hide)
-            3. The developer console (Eruda) will be available on web pages
-            4. Perfect for mobile development and debugging!
-
-            ## What's Changed
-
-            See the [commit history](https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}) for detailed changes.
-
-            ---
-
-            **Full Changelog**: https://github.com/${{ github.repository }}/commits/v${{ steps.version.outputs.VERSION }}
-          files: |
-            release-artifacts/d2go-chrome.zip
-            release-artifacts/d2go-firefox.zip
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+      - name: "🚀 Create GitHub Release"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            release-artifacts/d2go-chrome.zip \
+            release-artifacts/d2go-firefox.zip \
+            --title "D2Go v${{ steps.version.outputs.VERSION }}" \
+            --notes '# D2Go v${{ steps.version.outputs.VERSION }}
+
+          Developer Tools To Go - A mobile-friendly developer console browser extension.
+
+          ## Download & Installation
+
+          ### Chrome / Chromium / Edge
+
+          1. **Download** the `d2go-chrome.zip` file from the assets below
+          2. **Extract** the zip file to a folder on your computer
+          3. **Open** Chrome and navigate to `chrome://extensions/`
+          4. **Enable** "Developer mode" using the toggle in the top-right corner
+          5. **Click** "Load unpacked" button
+          6. **Select** the extracted folder
+          7. The D2Go extension should now appear in your extensions list!
+
+          ### Firefox
+
+          **Note:** Firefox requires extensions to be signed for permanent installation. For development/testing:
+
+          1. **Download** the `d2go-firefox.zip` file from the assets below
+          2. **Open** Firefox and navigate to `about:debugging#/runtime/this-firefox`
+          3. **Click** "Load Temporary Add-on..."
+          4. **Navigate** to the downloaded zip file and select it
+          5. The extension will be loaded temporarily (until you restart Firefox)
+
+          **For permanent installation:** You can load the extension permanently by:
+          - Setting `xpinstall.signatures.required` to `false` in `about:config` (Firefox Developer Edition or Nightly only)
+          - Or wait for the extension to be published on Firefox Add-ons (coming soon!)
+
+          ## Usage
+
+          After installation:
+          1. Click the D2Go icon in your browser toolbar
+          2. Configure your preferences (auto-load, auto-hide)
+          3. The developer console (Eruda) will be available on web pages
+          4. Perfect for mobile development and debugging!
+
+          ## What'\''s Changed
+
+          See the [commit history](https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}) for detailed changes.
+
+          ---
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/commits/v${{ steps.version.outputs.VERSION }}'
