@@ -137,18 +137,24 @@ jobs:
           <sub>Build triggered by commit ${{ github.event.pull_request.head.sha }}</sub>
           EOF
 
-          # Check if comment already exists
-          COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("<!-- d2go-extension-build-comment -->")) | .id' | head -n 1)
+          # Check if comment already exists (find comment with our identifier)
+          COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("<!-- d2go-extension-build-comment -->")) | .id' 2>/dev/null | head -n 1 || echo "")
 
-          if [ -n "$COMMENT_ID" ]; then
-            # Edit existing comment
-            gh api \
+          if [ -n "$COMMENT_ID" ] && [ "$COMMENT_ID" != "null" ]; then
+            # Try to edit existing comment
+            echo "Found existing comment ID: $COMMENT_ID, attempting to update..."
+            if gh api \
               --method PATCH \
               "/repos/${{ github.repository }}/issues/comments/$COMMENT_ID" \
-              -f body="$(cat comment.md)"
-            echo "Updated existing comment ID: $COMMENT_ID"
+              -f body="$(cat comment.md)" 2>/dev/null; then
+              echo "✅ Successfully updated existing comment"
+            else
+              echo "⚠️ Failed to update comment, creating new one..."
+              gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+            fi
           else
             # Create new comment
+            echo "No existing comment found, creating new one..."
             gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
-            echo "Created new comment"
+            echo "✅ Successfully created new comment"
           fi
