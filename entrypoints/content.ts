@@ -1,18 +1,18 @@
+import browserPolyfill from 'webextension-polyfill'
 import { browser as injectedBrowser, defineContentScript } from '#imports'
 
 const ERUDA_ROOT_ID = 'devtool2go-eruda-root'
 const PREF_AUTO_LOAD = 'preference:auto-load'
 const PREF_AUTO_HIDE = 'preference:auto-hide'
 
-let erudaLoader: Promise<typeof import('eruda')['default']> | null = null
-let initializingEruda: Promise<void> | null = null
-let desiredAutoHide = true
-let autoHideTeardown: (() => void) | null = null
-let extensionApi: ReturnType<typeof ensureBrowserApi> | undefined
 let erudaReady = false
+let desiredAutoHide = true
+let autoHideTeardown: (() => void) | null
+let initializingEruda: Promise<void> | null
+let extensionApi: ReturnType<typeof ensureBrowserApi> | undefined
+let erudaLoader: Promise<typeof import('eruda')['default']> | null
 
 export default defineContentScript({
-  world: 'ISOLATED',
   matches: ['*://*/*'],
   cssInjectionMode: 'ui',
   runAt: 'document_idle',
@@ -30,10 +30,7 @@ export default defineContentScript({
     }
 
     runtime.onMessage.addListener((message: unknown) => {
-      if (isInitMessage(message)) {
-        void showEruda()
-      }
-
+      if (isInitMessage(message)) void showEruda()
       return undefined
     })
 
@@ -56,17 +53,15 @@ export default defineContentScript({
     const preferences = await readPreferences()
     desiredAutoHide = preferences.autoHide
 
-    if (preferences.autoLoad) {
-      await initErudaOnce()
-    }
+    if (preferences.autoLoad) await initErudaOnce()
   },
 })
 
 async function loadEruda() {
   if (!erudaLoader) {
     erudaLoader = import('eruda')
-      .then((mod) => mod.default)
-      .catch((error) => {
+      .then(({ default: module }) => module)
+      .catch(error => {
         erudaLoader = null
         throw error
       })
@@ -82,7 +77,7 @@ async function ensureDomReady() {
   )
     return
 
-  await new Promise<void>((resolve) => {
+  await new Promise<void>(resolve => {
     document.addEventListener('DOMContentLoaded', () => resolve(), {
       once: true,
     })
@@ -93,11 +88,11 @@ async function ensureBody(): Promise<HTMLBodyElement> {
   let body = document.body
   if (body instanceof HTMLBodyElement) return body
 
-  await new Promise<void>((resolve) => {
+  await new Promise<void>(resolve => {
     const observer = new MutationObserver(() => {
       if (document.body) {
         observer.disconnect()
-        resolve()
+        void resolve()
       }
     })
 
@@ -113,7 +108,7 @@ async function ensureBody(): Promise<HTMLBodyElement> {
 }
 
 function ensureContainer(): HTMLElement {
-  const existing = document.getElementById(ERUDA_ROOT_ID)
+  const existing = document.querySelector(`div#${ERUDA_ROOT_ID}`)
   if (existing) return existing
 
   const container = document.createElement('div')
@@ -222,20 +217,15 @@ async function setAutoHide(
 
 function ensureBrowserApi(): typeof injectedBrowser | undefined {
   if (typeof injectedBrowser !== 'undefined') return injectedBrowser
+  if (browserPolyfill?.runtime) {
+    return browserPolyfill as typeof injectedBrowser
+  }
   if (typeof globalThis !== 'undefined' && 'browser' in globalThis) {
     const candidate = (
       globalThis as unknown as {
         browser?: typeof injectedBrowser
       }
     ).browser
-    if (candidate) return candidate
-  }
-  if (typeof globalThis !== 'undefined' && 'chrome' in globalThis) {
-    const candidate = (
-      globalThis as unknown as {
-        chrome?: typeof injectedBrowser
-      }
-    ).chrome
     if (candidate) return candidate
   }
   return undefined

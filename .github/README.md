@@ -1,6 +1,6 @@
-# D2Go - Developer Tools To Go  💨
+# Dev Tools To Go
 
-A nice developer console for your mobile and PC, Chrome, Safari & Firefox.
+Dev console for in any browser on Android, iOS and Web
 
 ![demo](./demo.png)
 
