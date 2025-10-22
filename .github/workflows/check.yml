@@ -14,10 +14,14 @@ defaults:
 env:
   ACTIONS_RUNNER_DEBUG: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   check:
     name: "Lint, Typecheck, Build"
-    timeout-minutes: 3
+    timeout-minutes: 5
     runs-on: ["ubuntu-latest"]
     steps:
       - name: "🔑 Checkout"
@@ -28,17 +32,107 @@ jobs:
         with:
           bun-version: "latest"
 
-      - name: "Install Dependencies"
+      - name: "📦 Install Dependencies"
         run: bun install --frozen-lockfile --verbose
 
-      - name: "Lint & Format"
+      - name: "🔍 Lint & Format"
         run: |
           bun x @biomejs/biome check . --reporter='github'
 
-      - name: "Typecheck"
+      - name: "✅ Typecheck"
         run: bun typecheck
 
-      - name: "Build"
+      - name: "🏗️ Build"
         run: |
           bun run build
           bun run compile
+
+      - name: "📦 Build and zip Chrome extension"
+        run: bun run zip
+
+      - name: "🦊 Build and zip Firefox extension"
+        run: |
+          bun run build:firefox
+          bun run zip:firefox
+
+      - name: "🗂️ Prepare artifacts"
+        id: artifacts
+        run: |
+          mkdir -p pr-artifacts
+
+          # Find the generated zip files
+          CHROME_ZIP=$(find .output -name "*chrome*.zip" -type f | head -n 1)
+          FIREFOX_ZIP=$(find .output -name "*firefox*.zip" -type f | head -n 1)
+
+          # If chrome zip not found by name, try finding the default zip
+          if [ -z "$CHROME_ZIP" ]; then
+            CHROME_ZIP=$(find .output -name "*.zip" -type f -not -name "*firefox*" | head -n 1)
+          fi
+
+          # Copy and rename for clarity
+          if [ -n "$CHROME_ZIP" ]; then
+            cp "$CHROME_ZIP" pr-artifacts/d2go-chrome.zip
+            echo "chrome_exists=true" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -n "$FIREFOX_ZIP" ]; then
+            cp "$FIREFOX_ZIP" pr-artifacts/d2go-firefox.zip
+            echo "firefox_exists=true" >> $GITHUB_OUTPUT
+          fi
+
+          ls -la pr-artifacts/
+
+      - name: "⬆️ Upload Chrome artifact"
+        if: steps.artifacts.outputs.chrome_exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: d2go-chrome-pr${{ github.event.pull_request.number }}
+          path: pr-artifacts/d2go-chrome.zip
+          retention-days: 30
+
+      - name: "⬆️ Upload Firefox artifact"
+        if: steps.artifacts.outputs.firefox_exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: d2go-firefox-pr${{ github.event.pull_request.number }}
+          path: pr-artifacts/d2go-firefox.zip
+          retention-days: 30
+
+      - name: "💬 Comment on PR"
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get the run URL for artifact downloads
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Create comment body
+          cat > comment.md << 'EOF'
+          ## 📦 Extension Build Artifacts
+
+          The extension has been built successfully! You can download and test the builds:
+
+          ### Chrome / Chromium / Edge
+          - **Download**: [d2go-chrome-pr${{ github.event.pull_request.number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - **Installation**:
+            1. Download and extract the zip file
+            2. Navigate to `chrome://extensions/`
+            3. Enable "Developer mode"
+            4. Click "Load unpacked" and select the extracted folder
+
+          ### Firefox
+          - **Download**: [d2go-firefox-pr${{ github.event.pull_request.number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - **Installation**:
+            1. Download the zip file
+            2. Navigate to `about:debugging#/runtime/this-firefox`
+            3. Click "Load Temporary Add-on..."
+            4. Select the downloaded zip file
+
+          > **Note**: Artifacts are available for 30 days from the [workflow run]($RUN_URL).
+
+          ---
+          <sub>Build triggered by commit ${{ github.event.pull_request.head.sha }}</sub>
+          EOF
+
+          # Post comment using gh CLI
+          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
