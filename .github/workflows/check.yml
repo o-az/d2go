@@ -108,8 +108,9 @@ jobs:
           # Get the run URL for artifact downloads
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-          # Create comment body
+          # Create comment body with unique identifier
           cat > comment.md << 'EOF'
+          <!-- d2go-extension-build-comment -->
           ## 📦 Extension Build Artifacts
 
           The extension has been built successfully! You can download and test the builds:
@@ -136,5 +137,18 @@ jobs:
           <sub>Build triggered by commit ${{ github.event.pull_request.head.sha }}</sub>
           EOF
 
-          # Post comment using gh CLI
-          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+          # Check if comment already exists
+          COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("<!-- d2go-extension-build-comment -->")) | .id' | head -n 1)
+
+          if [ -n "$COMMENT_ID" ]; then
+            # Edit existing comment
+            gh api \
+              --method PATCH \
+              "/repos/${{ github.repository }}/issues/comments/$COMMENT_ID" \
+              -f body="$(cat comment.md)"
+            echo "Updated existing comment ID: $COMMENT_ID"
+          else
+            # Create new comment
+            gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+            echo "Created new comment"
+          fi
