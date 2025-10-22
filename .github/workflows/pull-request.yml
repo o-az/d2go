@@ -1,4 +1,4 @@
-name: Check
+name: Pull Request
 
 on:
   workflow_dispatch:
@@ -12,17 +12,17 @@ defaults:
     shell: bash
 
 env:
+  RETENTION_DAYS: 5
   ACTIONS_RUNNER_DEBUG: true
-
-permissions:
-  contents: read
-  pull-requests: write
 
 jobs:
   check:
-    name: "Lint, Typecheck, Build"
+    name: "Check, Build & Comment"
     timeout-minutes: 5
     runs-on: ["ubuntu-latest"]
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: "🔑 Checkout"
         uses: actions/checkout@v5
@@ -82,27 +82,27 @@ jobs:
 
           ls -la pr-artifacts/
 
-      - name: "⬆️ Upload Chrome artifact"
+      - name: "🌐 Upload Artifact - Chromium"
         if: steps.artifacts.outputs.chrome_exists == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: d2go-chrome-pr${{ github.event.pull_request.number }}
+          overwrite: true
           path: pr-artifacts/d2go-chrome.zip
-          retention-days: 30
+          retention-days: ${{ env.RETENTION_DAYS }}
+          name: d2go-chrome-pr${{ github.event.pull_request.number }}
 
-      - name: "⬆️ Upload Firefox artifact"
+      - name: "🌐 Upload Artifact - Firefox"
         if: steps.artifacts.outputs.firefox_exists == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: d2go-firefox-pr${{ github.event.pull_request.number }}
+          overwrite: true
           path: pr-artifacts/d2go-firefox.zip
-          retention-days: 30
+          retention-days: ${{ env.RETENTION_DAYS }}
+          name: d2go-firefox-pr${{ github.event.pull_request.number }}
 
       - name: "💬 Comment on PR"
         if: github.event_name == 'pull_request'
         env:
-          # To have comments appear from your account instead of github-actions[bot],
-          # create a PAT and add it as GH_PAT secret. See .github/PR_COMMENTS_SETUP.md
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           # Get the run URL for artifact downloads
@@ -115,7 +115,7 @@ jobs:
 
           The extension has been built successfully! You can download and test the builds:
 
-          ### Chrome / Chromium / Edge
+          ### Chromium: Chrome / Brave / Edge / etc.
           - **Download**: [d2go-chrome-pr${{ github.event.pull_request.number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           - **Installation**:
             1. Download and extract the zip file
@@ -123,7 +123,7 @@ jobs:
             3. Enable "Developer mode"
             4. Click "Load unpacked" and select the extracted folder
 
-          ### Firefox
+          ### SpiderMonkey: Firefox / Zen / etc.
           - **Download**: [d2go-firefox-pr${{ github.event.pull_request.number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           - **Installation**:
             1. Download the zip file
