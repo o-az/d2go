@@ -137,24 +137,38 @@ jobs:
           <sub>Build triggered by commit ${{ github.event.pull_request.head.sha }}</sub>
           EOF
 
-          # Check if comment already exists (find comment with our identifier)
-          COMMENT_ID=$(gh pr view ${{ github.event.pull_request.number }} --json comments --jq '.comments[] | select(.body | contains("<!-- d2go-extension-build-comment -->")) | .id' 2>/dev/null | head -n 1 || echo "")
+      - name: "PR Comment"
+        if : github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const commentMarker = '<!-- d2go-extension-build-comment -->'
 
-          if [ -n "$COMMENT_ID" ] && [ "$COMMENT_ID" != "null" ]; then
-            # Try to edit existing comment
-            echo "Found existing comment ID: $COMMENT_ID, attempting to update..."
-            if gh api \
-              --method PATCH \
-              "/repos/${{ github.repository }}/issues/comments/$COMMENT_ID" \
-              -f body="$(cat comment.md)" 2>/dev/null; then
-              echo "✅ Successfully updated existing comment"
-            else
-              echo "⚠️ Failed to update comment, creating new one..."
-              gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
-            fi
-          else
-            # Create new comment
-            echo "No existing comment found, creating new one..."
-            gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
-            echo "✅ Successfully created new comment"
-          fi
+            const fs = require('node:fs')
+            const commentBody = fs.readFileSync('comment.md', 'utf8')
+
+            const prNumber = context.payload.pull_request.number
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const existingComment = comments.find((comment) => comment.body.includes(commentMarker))
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody,
+              })
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody,
+              })
+            }
+            
