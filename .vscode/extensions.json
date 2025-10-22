@@ -1,6 +1,6 @@
 {
   "recommendations": [
-    "biomejs.biome",
+    "biomejs.biome"
   ],
   "unwantedRecommendations": [
     "esbenp.prettier-vscode",
