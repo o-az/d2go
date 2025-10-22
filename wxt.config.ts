@@ -22,6 +22,7 @@ export default defineConfig({
   manifest: {
     name: 'D2Go',
     permissions: ['activeTab', 'tabs', 'storage'],
+    optional_host_permissions: ['*://*/*'],
     browser_specific_settings: {
       gecko: {
         id: 'omaraziz.dev@gmail.com',
