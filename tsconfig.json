@@ -1,16 +1,11 @@
 {
-  "extends": [
-    "./.wxt/tsconfig.json"
-  ],
+  "extends": ["./.wxt/tsconfig.json"],
   "compilerOptions": {
     "strict": true,
+    "checkJs": true,
+    "allowJs": true,
     "strictNullChecks": true,
-    "types": [
-      "node",
-      "typed-query-selector/strict"
-    ]
+    "types": ["node", "typed-query-selector/strict"]
   },
-  "files": [
-    "env.d.ts"
-  ]
+  "files": ["env.d.ts"]
 }
